@@ -25,6 +25,7 @@ from risk_metrics import (  # noqa: E402
     segment_breakdown,
     top_risk_accounts,
 )
+from scoring import score_raw_dataframe, ScoringError  # noqa: E402
 
 st.set_page_config(page_title="Portfolio Risk Dashboard", page_icon="📉", layout="wide")
 
@@ -36,14 +37,46 @@ st.caption(
     "portfolio-level exposure and expected-loss metrics."
 )
 
-try:
-    df = load_scored_portfolio()
-except FileNotFoundError as e:
-    st.error(str(e))
-    st.info("From the project root, run:\n\n```\npython src/download_data.py\npython src/train_model.py\n```")
-    st.stop()
+st.sidebar.header("Data source")
+uploaded = st.sidebar.file_uploader(
+    "Upload your own raw credit-account CSV",
+    type="csv",
+    help=(
+        "Needs the UCI 'Default of Credit Card Clients' columns — LIMIT_BAL, SEX, "
+        "EDUCATION, MARRIAGE, AGE, PAY_0..PAY_6, BILL_AMT1..6, PAY_AMT1..6 (or this "
+        "project's renamed versions). See the README for the full list. Leave empty "
+        "to explore the bundled 30,000-account sample instead."
+    ),
+)
+
+if uploaded is not None:
+    try:
+        df = score_raw_dataframe(pd.read_csv(uploaded))
+        st.sidebar.success(f"Scored {len(df):,} accounts from your file using the trained model.")
+    except ScoringError as e:
+        st.sidebar.error(str(e))
+        st.stop()
+    except Exception as e:  # noqa: BLE001
+        st.sidebar.error(f"Couldn't read that file as CSV: {e}")
+        st.stop()
+else:
+    try:
+        df = load_scored_portfolio()
+    except FileNotFoundError as e:
+        st.error(str(e))
+        st.info("From the project root, run:\n\n```\npython src/download_data.py\npython src/train_model.py\n```")
+        st.stop()
 
 summary = portfolio_summary(df)
+
+st.sidebar.divider()
+st.sidebar.download_button(
+    "⬇️ Download this scored portfolio as CSV",
+    data=df.to_csv(index=False).encode("utf-8"),
+    file_name="scored_portfolio.csv",
+    mime="text/csv",
+    help="Feed this straight into the GenAI Risk Insights Assistant project to get narrated briefings on this exact data.",
+)
 
 # --- KPI row ---
 c1, c2, c3, c4, c5 = st.columns(5)
@@ -110,5 +143,11 @@ with st.expander("How PD / expected loss are calculated"):
         These are simplifying assumptions, stated openly — the point of this project is to
         demonstrate the *pipeline* (model → PD → portfolio risk rollup → dashboard), not to
         replicate a bank's internal LGD/EAD models.
+
+        **Bring your own data:** upload a CSV in the sidebar and everything on this page —
+        KPIs, charts, risk bands, the account table — recomputes live using the model already
+        trained on the UCI dataset. Nothing is retrained on your upload; it's scored with the
+        existing model, the same way a real risk team would apply a validated model to a new
+        batch of accounts.
         """
     )

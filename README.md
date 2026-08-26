@@ -46,20 +46,43 @@ guide):
 - [Home Credit Default Risk](https://www.kaggle.com/c/home-credit-default-risk) — multi-table, ~300k applicants, the "realistic" version
 - [Give Me Some Credit](https://www.kaggle.com/c/GiveMeSomeCredit) — single table, ~150k rows, closer in shape to this one
 
+## Bring your own data
+
+The deployed app isn't limited to the bundled sample — open the sidebar and
+upload your own raw accounts CSV. It's scored live with the already-trained
+model (nothing is retrained on your upload) and every KPI, chart, and table
+on the page recomputes from your file.
+
+Your CSV needs these columns (either the original UCI names or the renamed
+versions shown here — both work):
+
+| Renamed | Original UCI | Meaning |
+|---|---|---|
+| `credit_limit` | `LIMIT_BAL` | credit line |
+| `sex`, `education`, `marriage`, `age` | `SEX`, `EDUCATION`, `MARRIAGE`, `AGE` | demographics |
+| `repay_status_1..6` | `PAY_0`, `PAY_2..PAY_6` | monthly repayment status, most recent first |
+| `bill_amt_1..6` | `BILL_AMT1..6` | monthly statement balance |
+| `pay_amt_1..6` | `PAY_AMT1..6` | monthly amount actually paid |
+
+Once scored, use the sidebar's **"Download this scored portfolio as CSV"**
+button to feed the result straight into the **GenAI Risk Insights Assistant**
+project for narrated briefings on that exact data.
+
 ## Project structure
 
 ```
 credit-default-risk-dashboard/
-├── app.py                  # Streamlit dashboard
+├── app.py                  # Streamlit dashboard (bundled sample OR your own upload)
 ├── src/
 │   ├── download_data.py    # fetches/generates the raw data
 │   ├── features.py         # utilization, payment ratio, delinquency features
 │   ├── train_model.py      # trains + compares logistic regression vs XGBoost
-│   └── risk_metrics.py     # portfolio-level rollups (also used by the GenAI project)
+│   ├── risk_metrics.py     # portfolio-level rollups (also used by the GenAI project)
+│   └── scoring.py          # scores a fresh/uploaded file with the already-trained model
 ├── notebooks/
 │   └── 01_eda.ipynb        # exploratory data analysis
-├── data/                   # not committed — generated locally (see .gitignore)
-├── models/                 # not committed — trained model + metrics.json
+├── data/                   # real UCI dataset + scored output, committed so the deployed app has data to read
+├── models/                 # trained model + metrics.json, committed for the same reason
 └── requirements.txt
 ```
 
