@@ -1,7 +1,7 @@
 {
-  "logistic_regression_auc": 0.742,
-  "xgboost_auc": 0.7762,
-  "xgboost_avg_precision": 0.5433,
+  "logistic_regression_auc": 0.7406,
+  "xgboost_auc": 0.7774,
+  "xgboost_avg_precision": 0.5444,
   "winner": "xgboost",
   "n_train": 22500,
   "n_test": 7500,

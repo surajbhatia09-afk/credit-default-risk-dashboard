@@ -57,11 +57,16 @@ def train() -> None:
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    logreg = LogisticRegression(max_iter=1000, class_weight="balanced")
+    logreg = LogisticRegression(max_iter=1000)  # no class_weight: keeps predict_proba calibrated to the true default rate
     logreg.fit(X_train_scaled, y_train)
     logreg_auc = roc_auc_score(y_test, logreg.predict_proba(X_test_scaled)[:, 1])
 
     # --- Challenger: XGBoost (usually stronger, still explainable via SHAP) ---
+    # Deliberately NOT using scale_pos_weight here: it nudges AUC/recall slightly
+    # but systematically inflates predict_proba above the true default rate, which
+    # would throw off every downstream number that assumes pd_score is a real
+    # probability (expected loss, risk-band mix). Verified empirically this dataset
+    # doesn't need it — AUC is effectively identical either way.
     xgb = XGBClassifier(
         n_estimators=300,
         max_depth=4,
@@ -70,7 +75,6 @@ def train() -> None:
         colsample_bytree=0.85,
         eval_metric="auc",
         random_state=42,
-        scale_pos_weight=(y_train == 0).sum() / max((y_train == 1).sum(), 1),
     )
     xgb.fit(X_train, y_train)
     xgb_proba = xgb.predict_proba(X_test)[:, 1]

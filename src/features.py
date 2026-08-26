@@ -20,10 +20,10 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     # Utilization: how much of the credit line is drawn, most recent statement
-    df["utilization"] = (df["bill_amt_1"] / df["credit_limit"].replace(0, pd.NA)).clip(0, 5).fillna(0)
+    df["utilization"] = (df["bill_amt_1"] / df["credit_limit"].replace(0, pd.NA)).clip(0, 5).fillna(0.0).astype(float)
     df["avg_utilization_6m"] = (
         df[BILL_COLS].mean(axis=1) / df["credit_limit"].replace(0, pd.NA)
-    ).clip(0, 5).fillna(0)
+    ).clip(0, 5).fillna(0.0).astype(float)
 
     # Payment ratio: how much of the outstanding bill actually gets paid down
     total_billed = df[BILL_COLS].sum(axis=1).replace(0, pd.NA)
