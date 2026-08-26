@@ -62,6 +62,14 @@ COLUMN_RENAME = {
 }
 
 
+# Mirrors the real UCI dataset as a plain CSV, for networks that can reach
+# GitHub but not UCI's own servers directly (e.g. some corporate/VPN setups).
+CSV_MIRROR_URL = (
+    "https://raw.githubusercontent.com/FederatedAI/FATE/master/"
+    "examples/data/UCI_Credit_Card.csv"
+)
+
+
 def try_download() -> pd.DataFrame | None:
     try:
         print(f"Downloading from {UCI_XLS_URL} ...")
@@ -73,10 +81,19 @@ def try_download() -> pd.DataFrame | None:
             xls_name = [n for n in zf.namelist() if n.lower().endswith((".xls", ".xlsx"))][0]
             with zf.open(xls_name) as f:
                 df = pd.read_excel(f, header=1)
-        print(f"Downloaded {len(df):,} rows.")
+        print(f"Downloaded {len(df):,} rows from UCI directly.")
         return df
     except Exception as exc:  # noqa: BLE001
-        print(f"Download failed ({exc}). Falling back to a synthetic sample dataset.")
+        print(f"Direct UCI download failed ({exc}). Trying the CSV mirror instead...")
+
+    try:
+        resp = requests.get(CSV_MIRROR_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+        df = pd.read_csv(io.StringIO(resp.text))
+        print(f"Downloaded {len(df):,} rows from the CSV mirror.")
+        return df
+    except Exception as exc:  # noqa: BLE001
+        print(f"Mirror download failed too ({exc}). Falling back to a synthetic sample dataset.")
         return None
 
 

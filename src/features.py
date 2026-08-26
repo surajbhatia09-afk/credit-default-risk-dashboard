@@ -28,7 +28,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Payment ratio: how much of the outstanding bill actually gets paid down
     total_billed = df[BILL_COLS].sum(axis=1).replace(0, pd.NA)
     total_paid = df[PAY_AMT_COLS].sum(axis=1)
-    df["payment_ratio_6m"] = (total_paid / total_billed).clip(0, 3).fillna(1.0)
+    df["payment_ratio_6m"] = (total_paid / total_billed).clip(0, 3).fillna(1.0).infer_objects(copy=False)
 
     # Delinquency severity: worst and average repayment-status code over 6 months
     # (UCI encoding: -1 = paid duly, 1 = 1 month late, 2 = 2 months late, ...)
