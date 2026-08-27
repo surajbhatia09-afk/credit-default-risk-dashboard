@@ -98,7 +98,3 @@ The point of this project is the *pipeline* — model → PD → portfolio
 rollup → dashboard — not a from-scratch reproduction of a bank's internal
 LGD/EAD models.
 
-## Deploying it live (free)
-
-See the step-by-step guide for pushing this to GitHub and deploying it free
-on Streamlit Community Cloud so you have a shareable link, not just a repo.
